@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <iostream>
 #include <numeric>
-#include <math.h> 
+#include <math.h>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -27,7 +27,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 
   // Initialize particles
   for (int i = 0; i < num_particles; i++) {
-    Particle particle = { i, dist_x(gen), dist_y(gen), dist_psi(gen)};
+    Particle particle = { i, dist_x(gen), dist_y(gen), dist_psi(gen) };
 
     particles.push_back(particle);
     weights.push_back(1);
@@ -62,11 +62,11 @@ void ParticleFilter::prediction(double delta_t,  double std_pos[],
 void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted,
                                      std::vector<LandmarkObs>& observations) {
   for (auto i_obsrv = observations.begin(); i_obsrv < observations.end(); i_obsrv++) {
-    LandmarkObs observation = *i_obsrv;
-    double final_dist = INFINITY;
+    LandmarkObs& observation = *i_obsrv;
+    double final_dist        = INFINITY;
 
     for (auto i_pred = predicted.begin(); i_pred < predicted.end(); i_pred++) {
-      LandmarkObs pred = *i_pred;
+      LandmarkObs& pred = *i_pred;
       double dist = sqrt(pow(observation.x - pred.x, 2) + pow(observation.y - pred.y, 2));
 
       if (dist < final_dist) {
@@ -77,17 +77,18 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted,
   }
 }
 
-void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
-		const std::vector<LandmarkObs> &observations, const Map &map_landmarks) {
+void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
+                                   std::vector<LandmarkObs> observations,
+                                   Map map_landmarks) {
   double sum_weights = 0;
 
   for (auto i_particle = particles.begin(); i_particle < particles.end(); i_particle++) {
-    vector<int> associations_id;
-    vector<double> sense_x;
-    vector<double> sense_y;
+    std::vector<int>    associations_id;
+    std::vector<double> sense_x;
+    std::vector<double> sense_y;
 
     Particle& particle = *i_particle;
-    vector<LandmarkObs> predicted;
+    std::vector<LandmarkObs> predicted;
 
     for (auto i_landmark = map_landmarks.landmark_list.begin();
          i_landmark < map_landmarks.landmark_list.end(); i_landmark++) {
@@ -99,6 +100,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
         associations_id.push_back(landmark.id_i);
         sense_x.push_back(landmark.x_f);
         sense_y.push_back(landmark.y_f);
+
         LandmarkObs predicted_landmark = glob2particle(landmark, particle);
         predicted.push_back(predicted_landmark);
       }
@@ -109,10 +111,10 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
     particle.weight = 1;
     for (auto i_obsrv = observations.begin(); i_obsrv < observations.end(); i_obsrv++) {
-      LandmarkObs observation = *i_obsrv;
+      LandmarkObs& observation = *i_obsrv;
 
       double delta_x = predicted[observation.id].x - observation.x;
-      double delta_y = predicted[observation.id].x - observation.y;
+      double delta_y = predicted[observation.id].y - observation.y;
       double argu    = pow(delta_x * std_landmark[0], 2) + pow(delta_y * std_landmark[1], 2);
 
       particle.weight *= exp(-0.5 * argu) / 2 / M_PI / std_landmark[0] / std_landmark[1];
@@ -144,69 +146,73 @@ void ParticleFilter::resample() {
   particles = new_particles;
 }
 
-Particle ParticleFilter::SetAssociations(Particle& particle, const std::vector<int>& associations, 
-                                     const std::vector<double>& sense_x, const std::vector<double>& sense_y)
-{
-    //particle: the particle to assign each listed association, and association's (x,y) world coordinates mapping to
-    // associations: The landmark id that goes along with each listed association
-    // sense_x: the associations x mapping already converted to world coordinates
-    // sense_y: the associations y mapping already converted to world coordinates
+// TODO: remove consts?
+Particle ParticleFilter::SetAssociations(Particle particle,
+                                         std::vector<int> associations,
+                                         std::vector<double> sense_x,
+                                         std::vector<double> sense_y) {
+  // Clear associations
+  particle.associations.clear();
+  particle.sense_x.clear();
+  particle.sense_y.clear();
 
-    particle.associations= associations;
-    particle.sense_x = sense_x;
-    particle.sense_y = sense_y;
+  particle.associations = associations;
+  particle.sense_x      = sense_x;
+  particle.sense_y      = sense_y;
+
+  return particle;
 }
 
-string ParticleFilter::getAssociations(Particle best)
-{
+string ParticleFilter::getAssociations(Particle best) {
 	vector<int> v = best.associations;
 	stringstream ss;
-    copy( v.begin(), v.end(), ostream_iterator<int>(ss, " "));
-    string s = ss.str();
-    s = s.substr(0, s.length()-1);  // get rid of the trailing space
-    return s;
+  copy( v.begin(), v.end(), ostream_iterator<int>(ss, " "));
+  string s = ss.str();
+  s = s.substr(0, s.length()-1);  // get rid of the trailing space
+
+  return s;
 }
 
-string ParticleFilter::getSenseX(Particle best)
-{
+string ParticleFilter::getSenseX(Particle best) {
 	vector<double> v = best.sense_x;
 	stringstream ss;
-    copy( v.begin(), v.end(), ostream_iterator<float>(ss, " "));
-    string s = ss.str();
-    s = s.substr(0, s.length()-1);  // get rid of the trailing space
-    return s;
+  copy( v.begin(), v.end(), ostream_iterator<float>(ss, " "));
+  string s = ss.str();
+  s = s.substr(0, s.length()-1);  // get rid of the trailing space
+
+  return s;
 }
 
-string ParticleFilter::getSenseY(Particle best)
-{
+string ParticleFilter::getSenseY(Particle best) {
 	vector<double> v = best.sense_y;
 	stringstream ss;
-    copy( v.begin(), v.end(), ostream_iterator<float>(ss, " "));
-    string s = ss.str();
-    s = s.substr(0, s.length()-1);  // get rid of the trailing space
-    return s;
+  copy( v.begin(), v.end(), ostream_iterator<float>(ss, " "));
+  string s = ss.str();
+  s = s.substr(0, s.length()-1);  // get rid of the trailing space
+
+  return s;
 }
 
-
 LandmarkObs ParticleFilter::glob2particle(Map::single_landmark_s g_landmark, Particle particle) {
-  LandmarkObs landmark_observation;
+  LandmarkObs landmark_observations;
+
   Eigen::MatrixXd R_c2g(2,2);
   Eigen::MatrixXd t_c2g(2,1);
   Eigen::MatrixXd landmark_g(2,1);
 
+  R_c2g      << cos(particle.theta), -sin(particle.theta),
+                sin(particle.theta), cos(particle.theta);
+
+  t_c2g      << particle.x, particle.y;
+
   landmark_g << g_landmark.x_f, g_landmark.y_f;
-
-  R_c2g << cos(particle.theta), -sin(particle.theta),
-           sin(particle.theta), cos(particle.theta);
-
-  t_c2g << particle.x, particle.y;
 
   Eigen::MatrixXd R_c2g_transp = R_c2g.transpose();
   Eigen::MatrixXd obs = R_c2g_transp * landmark_g - R_c2g_transp * t_c2g;
 
-  landmark_observation.id = g_landmark.id_i;
-  landmark_observation.x  = obs(0,0);
-  landmark_observation.y  = obs(1,0);
+  landmark_observations.id = g_landmark.id_i;
+  landmark_observations.x  = obs(0,0);
+  landmark_observations.y  = obs(1,0);
 
-  return landmark_observation
+  return landmark_observations;
 }
