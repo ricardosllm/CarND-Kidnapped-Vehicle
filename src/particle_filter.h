@@ -1,11 +1,3 @@
-/*
- * particle_filter.h
- *
- * 2D particle filter class.
- *  Created on: Dec 12, 2016
- *      Author: Tiffany Huang
- */
-
 #ifndef PARTICLE_FILTER_H_
 #define PARTICLE_FILTER_H_
 
@@ -13,7 +5,6 @@
 #include "Eigen/Dense"
 
 struct Particle {
-
   int id;
   double x;
   double y;
@@ -23,7 +14,6 @@ struct Particle {
   std::vector<double> sense_x;
   std::vector<double> sense_y;
 };
-
 
 
 class ParticleFilter {
@@ -106,7 +96,6 @@ class ParticleFilter {
                            const std::vector<double> sense_x,
                            const std::vector<double> sense_y);
 
-
   std::string getAssociations(Particle best);
   std::string getSenseX(Particle best);
   std::string getSenseY(Particle best);
@@ -122,7 +111,5 @@ class ParticleFilter {
  private:
   LandmarkObs glob2particle(Map::single_landmark_s g_landmark, Particle particle);
 };
-
-
 
 #endif /* PARTICLE_FILTER_H_ */
