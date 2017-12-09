@@ -77,8 +77,9 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted,
   }
 }
 
-void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
-		const std::vector<LandmarkObs> &observations, const Map &map_landmarks) {
+void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
+                                   vector<LandmarkObs> observations,
+                                   Map map_landmarks) {
   double sum_weights = 0;
 
   for (auto i_particle = particles.begin(); i_particle < particles.end(); i_particle++) {
@@ -131,6 +132,29 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
   }
 }
 
+LandmarkObs ParticleFilter::glob2particle(Map::single_landmark_s g_landmark, Particle particle) {
+  LandmarkObs landmark_observation;
+  Eigen::MatrixXd R_c2g(2,2);
+  Eigen::MatrixXd t_c2g(2,1);
+  Eigen::MatrixXd landmark_g(2,1);
+
+  landmark_g << g_landmark.x_f, g_landmark.y_f;
+
+  R_c2g << cos(particle.theta), -sin(particle.theta),
+    sin(particle.theta), cos(particle.theta);
+
+  t_c2g << particle.x, particle.y;
+
+  Eigen::MatrixXd R_c2g_transp = R_c2g.transpose();
+  Eigen::MatrixXd obs = R_c2g_transp * landmark_g - R_c2g_transp * t_c2g;
+
+  landmark_observation.id = g_landmark.id_i;
+  landmark_observation.x  = obs(0,0);
+  landmark_observation.y  = obs(1,0);
+
+  return landmark_observation;
+}
+
 void ParticleFilter::resample() {
   discrete_distribution<int> resampler(weights.begin(), weights.end());
   vector<Particle> new_particles;
@@ -144,8 +168,10 @@ void ParticleFilter::resample() {
   particles = new_particles;
 }
 
-Particle ParticleFilter::SetAssociations(Particle& particle, const std::vector<int>& associations, 
-                                     const std::vector<double>& sense_x, const std::vector<double>& sense_y)
+Particle ParticleFilter::SetAssociations(Particle particle,
+                                         const vector<int> associations,
+                                         const vector<double> sense_x,
+                                         const vector<double> sense_y)
 {
     //particle: the particle to assign each listed association, and association's (x,y) world coordinates mapping to
     // associations: The landmark id that goes along with each listed association
@@ -155,6 +181,7 @@ Particle ParticleFilter::SetAssociations(Particle& particle, const std::vector<i
     particle.associations= associations;
     particle.sense_x = sense_x;
     particle.sense_y = sense_y;
+    return particle;
 }
 
 string ParticleFilter::getAssociations(Particle best)
@@ -187,26 +214,3 @@ string ParticleFilter::getSenseY(Particle best)
     return s;
 }
 
-
-LandmarkObs ParticleFilter::glob2particle(Map::single_landmark_s g_landmark, Particle particle) {
-  LandmarkObs landmark_observation;
-  Eigen::MatrixXd R_c2g(2,2);
-  Eigen::MatrixXd t_c2g(2,1);
-  Eigen::MatrixXd landmark_g(2,1);
-
-  landmark_g << g_landmark.x_f, g_landmark.y_f;
-
-  R_c2g << cos(particle.theta), -sin(particle.theta),
-           sin(particle.theta), cos(particle.theta);
-
-  t_c2g << particle.x, particle.y;
-
-  Eigen::MatrixXd R_c2g_transp = R_c2g.transpose();
-  Eigen::MatrixXd obs = R_c2g_transp * landmark_g - R_c2g_transp * t_c2g;
-
-  landmark_observation.id = g_landmark.id_i;
-  landmark_observation.x  = obs(0,0);
-  landmark_observation.y  = obs(1,0);
-
-  return landmark_observation
-}
