@@ -146,7 +146,6 @@ void ParticleFilter::resample() {
   particles = new_particles;
 }
 
-// TODO: remove consts?
 Particle ParticleFilter::SetAssociations(Particle particle,
                                          std::vector<int> associations,
                                          std::vector<double> sense_x,
