@@ -65,3 +65,7 @@ Inputs to the particle filter can be found in the `data` directory.
 
 > * Map data provided by 3D Mapping Solutions GmbH.
 
+## Results
+
+The particle filter meets specifications as seen on the [results video file](results/CarND-particle-filter-ff8.mp4) by the message: **"Success! Your particle filter passed!"**
+
